@@ -8,7 +8,8 @@
   "bin": {
     "pkg": "lib-es5/bin.js"
   },
-  "files": [
+  "files-disabled": [
+    "for installing as dependencies, all is needed",
     "lib-es5/*.js",
     "dictionary/*.js",
     "prelude/*.js"
