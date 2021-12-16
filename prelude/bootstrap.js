@@ -2081,29 +2081,37 @@ function payloadFileSync(pointer) {
       const parts = moduleFolder.split(path.sep);
       const mIndex = parts.indexOf('node_modules') + 1;
 
-      let newPath;
+      let newFolder;
 
       // it's a node addon file contained in node_modules folder
       // we copy the entire module folder in tmp folder
-      if (mIndex > 0) {
+      const copyEntireFolder = mIndex < 0;
+      if (copyEntireFolder) {
         // Example: modulePackagePath = sharp/build/Release
         const modulePackagePath = parts.slice(mIndex).join(path.sep);
         // Example: modulePkgFolder = /snapshot/appname/node_modules/sharp
         const modulePkgFolder = parts.slice(0, mIndex + 1).join(path.sep);
 
-        if (!fs.existsSync(tmpFolder)) {
+        // Example: /tmp/pkg/<hash>/sharp/build/Release/sharp.node
+        newFolder = path.join(tmpFolder, modulePackagePath);
+      } else {
+        // simple load the file in the temporary folder
+        newFolder = tmpFolder;
+      }
+
+      let newPath = path.join(newFolder, moduleBaseName);
+      if (!fs.existsSync(tmpFolder)) {
+        createDirRecursively(tmpFolder);
+      }
+      if (!fs.existsSync(newPath)) {
+        if (copyEntireFolder) {
           // here we copy all files from the snapshot module folder to temporary folder
           // we keep the module folder structure to prevent issues with modules that are statically
           // linked using relative paths (Fix #1075)
-          createDirRecursively(tmpFolder);
           copyFolderRecursiveSync(modulePkgFolder, tmpFolder);
+        } else {
+          copyFileSync(modulePath, newPath);
         }
-
-        // Example: /tmp/pkg/<hash>/sharp/build/Release/sharp.node
-        newPath = path.join(tmpFolder, modulePackagePath, moduleBaseName);
-      } else {
-        // simple load the file in the temporary folder
-        newPath = path.join(tmpFolder, moduleBaseName);
       }
 
       // replace the path with the new module path
